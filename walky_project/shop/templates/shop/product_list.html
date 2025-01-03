@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ category }} Shoes</title>
+    <link rel="stylesheet" href="{% static 'shop/styles.css' %}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/products/Men/">Men</a></li>
+                <li><a href="/products/Women/">Women</a></li>
+                <li><a href="/products/Unisex/">Unisex</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h1>{{ category }} Shoes</h1>
+        <div class="products">
+            {% for product in products %}
+            <div class="product-card">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                <h2>{{ product.name }}</h2>
+                <p>${{ product.price }}</p>
+                <a href="#">View Details</a>
+            </div>
+            {% empty %}
+            <p>No products found in this category.</p>
+            {% endfor %}
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2025 Walky. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>

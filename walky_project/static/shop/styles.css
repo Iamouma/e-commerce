@@ -49,3 +49,24 @@ footer {
     background: #333;
     color: #fff;
 }
+
+.products {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin: 20px;
+}
+.product-card {
+    border: 1px solid #ccc;
+    padding: 15px;
+    text-align: center;
+    width: 200px;
+}
+.product-card img {
+    max-width: 100%;
+    height: auto;
+}
+.product-card h2 {
+    font-size: 1.2rem;
+}
