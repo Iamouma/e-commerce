@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
-from .models import Product, Cart
+from .models import Product, Cart, Order, OrderItem
 
 def homepage(request):
     return render(request, 'shop/homepage.html')
