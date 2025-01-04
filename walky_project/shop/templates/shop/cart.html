@@ -30,11 +30,73 @@
                 <p>Total: ${{ item.total_price }}</p>
             </div>
             {% endfor %}
+            <form method="post" action="{% url 'update_cart' item.id %}" class="update-cart-form">
+                {% csrf_token %}
+                <label for="quantity-{{ item.id }}">Quantity:</label>
+                <input type="number" id="quantity-{{ item.id }}" name="quantity" value="{{ item.quantity }}" min="1">
+                <button type="submit">Update</button>
+            </form>
+            <form method="post" action="{% url 'remove_from_cart' item.id %}" class="remove-cart-form">
+                {% csrf_token %}
+                <button type="submit">Remove</button>
+            </form>
+            <p id="cart-message"></p>                      
         </div>
         <p><strong>Total Price:</strong> ${{ total_price }}</p>
     </main>
     <footer>
         <p>&copy; 2025 Walky. All Rights Reserved.</p>
     </footer>
+    <!-- A script to handle AJAX for updating and removing items -->
+    <script>
+        // Update cart quantity
+        document.querySelectorAll('.update-cart-form').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const url = form.action;
+                const formData = new FormData(form);
+    
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    },
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        document.getElementById('cart-message').textContent = data.message;
+                        location.reload(); // Reload to reflect changes
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    
+        // Remove cart item
+        document.querySelectorAll('.remove-cart-form').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const url = form.action;
+    
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('cart-message').textContent = data.message;
+                    location.reload(); // Reload to reflect changes
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    </script>
+    
 </body>
 </html>

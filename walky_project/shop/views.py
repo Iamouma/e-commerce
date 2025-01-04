@@ -30,3 +30,22 @@ def view_cart(request):
     cart_items = Cart.objects.filter(user=request.user)
     total_price = sum(item.total_price() for item in cart_items)
     return render(request, 'shop/cart.html', {'cart_items': cart_items, 'total_price': total_price})
+ 
+@login_required
+def update_cart(request, cart_id):
+    if request.method == 'POST':
+        cart_item = get_object_or_404(Cart, id=cart_id, user=request.user)
+        new_quantity = int(request.POST.get('quantity', 1))
+        if new_quantity > 0:
+            cart_item.quantity = new_quantity
+            cart_item.save()
+            return JsonResponse({'message': 'Cart updated!', 'quantity': cart_item.quantity, 'total_price': cart_item.total_price()})
+        else:
+            return JsonResponse({'error': 'Quantity must be greater than 0'}, status=400)
+
+@login_required
+def remove_from_cart(request, cart_id):
+    if request.method == 'POST':
+        cart_item = get_object_or_404(Cart, id=cart_id, user=request.user)
+        cart_item.delete()
+        return JsonResponse({'message': 'Item removed from cart!'})
