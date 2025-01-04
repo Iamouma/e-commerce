@@ -1,0 +1,24 @@
+<h1>Order Summary</h1>
+<p>Order ID: {{ order.id }}</p>
+<p>Order Date: {{ order.created_at }}</p>
+<p>Total Price: ${{ order.total_price }}</p>
+
+<h2>Items</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in order.items.all %}
+        <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.price }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

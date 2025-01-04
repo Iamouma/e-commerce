@@ -1,6 +1,8 @@
 # Create your views here.
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
+from django.contrib import messages
+from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from .models import Product, Cart
 
@@ -49,3 +51,38 @@ def remove_from_cart(request, cart_id):
         cart_item = get_object_or_404(Cart, id=cart_id, user=request.user)
         cart_item.delete()
         return JsonResponse({'message': 'Item removed from cart!'})
+
+@login_required
+@transaction.atomic
+def checkout(request):
+    if request.method == 'POST':
+        cart_items = Cart.objects.filter(user=request.user)
+        if not cart_items.exists():
+            messages.error(request, "Your cart is empty!")
+            return redirect('cart')
+
+        # Calculate total price
+        total_price = sum(item.quantity * item.product.price for item in cart_items)
+
+        # Create an Order
+        order = Order.objects.create(user=request.user, total_price=total_price)
+
+        # Create OrderItems and clear the cart
+        for cart_item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                product=cart_item.product,
+                quantity=cart_item.quantity,
+                price=cart_item.product.price,
+            )
+            cart_item.delete()
+
+        messages.success(request, f"Order #{order.id} has been placed successfully!")
+        return redirect('order_summary', order_id=order.id)
+
+    return redirect('cart')
+
+@login_required
+def order_summary(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    return render(request, 'order_summary.html', {'order': order})
