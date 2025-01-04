@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }}</title>
+    <link rel="stylesheet" href="{% static 'shop/styles.css' %}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/products/Men/">Men</a></li>
+                <li><a href="/products/Women/">Women</a></li>
+                <li><a href="/products/Unisex/">Unisex</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <div class="product-detail">
+            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            <h1>{{ product.name }}</h1>
+            <p>{{ product.description }}</p>
+            <p><strong>Price:</strong> ${{ product.price }}</p>
+            <p><strong>Stock:</strong> {{ product.stock }} available</p>
+            <form method="post" action="{% url 'add_to_cart' product.id %}" id="add-to-cart-form">
+                {% csrf_token %}
+                <button type="submit">Add to Cart</button>
+            </form>
+            <p id="cart-message"></p>            
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2025 Walky. All Rights Reserved.</p>
+    </footer>
+    
+    <!-- A script to handle the form submission via AJAX -->
+    <script>
+        document.getElementById('add-to-cart-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const url = form.action;
+    
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('cart-message').textContent = data.message;
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+
+</body>
+</html>
