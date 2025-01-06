@@ -4,9 +4,12 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
-from .models import Product, Cart, Order, OrderItem, Review
+from .models import Product, Cart, Order, OrderItem, Review, Wishlist, Profile
 from django.core.mail import send_mail
-from .forms import ReviewForm
+from .forms import ReviewForm, UserForm, ProfileForm
+from django.db.models import Q
+
+
 
 
 def homepage(request):
@@ -14,7 +17,37 @@ def homepage(request):
 
 def product_list(request, category):
     products = Product.objects.filter(category=category)
-    return render(request, 'shop/product_list.html', {'products': products, 'category': category})
+    query = request.GET.get('q', '')
+    category = request.GET.get('category', '')
+    min_price = request.GET.get('min_price', '')
+    max_price = request.GET.get('max_price', '')
+
+    products = Product.objects.all()
+
+    # Search by name or description
+    if query:
+        products = products.filter(
+            Q(name__icontains=query) | Q(description__icontains=query)
+        )
+
+    # Filter by category
+    if category:
+        products = products.filter(category=category)
+
+    # Filter by price range
+    if min_price:
+        products = products.filter(price__gte=min_price)
+    if max_price:
+        products = products.filter(price__lte=max_price)
+
+    context = {
+        'products': products,
+        'query': query,
+        'category': category,
+        'min_price': min_price,
+        'max_price': max_price,
+    }
+    return render(request, 'shop/product_list.html', context)
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -118,9 +151,49 @@ def checkout(request):
 @login_required
 def order_summary(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
-    return render(request, 'order_summary.html', {'order': order})
+    return render(request, 'shop/order_summary.html', {'order': order})
 
 @login_required
 def order_history(request):
     orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'order_history.html', {'orders': orders})
+    return render(request, 'shop/order_history.html', {'orders': orders})
+
+@login_required
+def add_to_wishlist(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    Wishlist.objects.get_or_create(user=request.user, product=product)
+    messages.success(request, "Product added to your wishlist.")
+    return redirect('wishlist')
+
+@login_required
+def wishlist(request):
+    items = request.user.wishlist.select_related('product')
+    context = {'wishlist_items': items}
+    return render(request, 'shop/wishlist.html', context)
+
+@login_required
+def remove_from_wishlist(request, product_id):
+    item = get_object_or_404(Wishlist, user=request.user, product_id=product_id)
+    item.delete()
+    messages.success(request, "Product removed from your wishlist.")
+    return redirect('wishlist')
+
+@login_required
+def edit_profile(request):
+    user_form = UserForm(instance=request.user)
+    profile_form = ProfileForm(instance=request.user.profile)
+
+    if request.method == 'POST':
+        user_form = UserForm(request.POST, instance=request.user)
+        profile_form = ProfileForm(request.POST, request.FILES, instance=request.user.profile)
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, "Your profile has been updated successfully.")
+            return redirect('edit_profile')
+
+    context = {
+        'user_form': user_form,
+        'profile_form': profile_form,
+    }
+    return render(request, 'edit_profile.html', context)

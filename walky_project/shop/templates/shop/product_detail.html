@@ -59,9 +59,8 @@
             <p><a href="{% url 'login' %}">Log in</a> to leave a review.</p>
             {% endif %}
             <p>Average Rating: {{ product.average_rating|floatformat:1 }}/5</p>
-
-
         </div>
+        <a href="{% url 'add_to_wishlist' product.id %}">Add to Wishlist</a>
     </main>
     <footer>
         <p>&copy; 2025 Walky. All Rights Reserved.</p>
