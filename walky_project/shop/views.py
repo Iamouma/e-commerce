@@ -4,7 +4,10 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
-from .models import Product, Cart, Order, OrderItem
+from .models import Product, Cart, Order, OrderItem, Review
+from django.core.mail import send_mail
+from .forms import ReviewForm
+
 
 def homepage(request):
     return render(request, 'shop/homepage.html')
@@ -15,7 +18,28 @@ def product_list(request, category):
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    return render(request, 'shop/product_detail.html', {'product': product})
+    reviews = product.reviews.all()
+    review_form = ReviewForm()
+
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return redirect('login')
+
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.user = request.user
+            review.product = product
+            review.save()
+            messages.success(request, "Your review has been submitted.")
+            return redirect('product_detail', product_id=product.id)
+
+    context = {
+        'product': product,
+        'reviews': reviews,
+        'review_form': review_form,
+    }
+    return render(request, 'shop/product_detail.html', context)
 
 @login_required
 def add_to_cart(request, product_id):
@@ -52,6 +76,7 @@ def remove_from_cart(request, cart_id):
         cart_item.delete()
         return JsonResponse({'message': 'Item removed from cart!'})
 
+
 @login_required
 @transaction.atomic
 def checkout(request):
@@ -77,6 +102,14 @@ def checkout(request):
             )
             cart_item.delete()
 
+        # Send Confirmation Email
+        subject = f"Order Confirmation - Order #{order.id}"
+        message = f"Thank you for your purchase, {request.user.username}! Your order #{order.id} has been successfully placed.\n\nOrder Details:\n"
+        for item in order.items.all():
+            message += f"{item.quantity} x {item.product.name} @ ${item.price}\n"
+        message += f"\nTotal: ${order.total_price}\n\nThank you for shopping with us!"
+        send_mail(subject, message, 'your_email@gmail.com', [request.user.email])
+
         messages.success(request, f"Order #{order.id} has been placed successfully!")
         return redirect('order_summary', order_id=order.id)
 
@@ -86,3 +119,8 @@ def checkout(request):
 def order_summary(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     return render(request, 'order_summary.html', {'order': order})
+
+@login_required
+def order_history(request):
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'order_history.html', {'orders': orders})

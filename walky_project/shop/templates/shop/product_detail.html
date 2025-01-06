@@ -29,7 +29,38 @@
                 {% csrf_token %}
                 <button type="submit">Add to Cart</button>
             </form>
-            <p id="cart-message"></p>            
+            <p id="cart-message"></p>
+            
+            <h1>{{ product.name }}</h1>
+            <p>{{ product.description }}</p>
+            <p>Price: ${{ product.price }}</p>
+
+            <h2>Reviews</h2>
+            <div>
+                {% for review in reviews %}
+                <div>
+                    <strong>{{ review.user.username }}</strong> rated {{ review.rating }}/5
+                    <p>{{ review.comment }}</p>
+                    <small>{{ review.created_at }}</small>
+                </div>
+                {% empty %}
+                <p>No reviews yet. Be the first to review!</p>
+                {% endfor %}
+            </div>
+
+            <h2>Leave a Review</h2>
+            {% if user.is_authenticated %}
+            <form method="post">
+                {% csrf_token %}
+                {{ review_form.as_p }}
+                <button type="submit">Submit Review</button>
+            </form>
+            {% else %}
+            <p><a href="{% url 'login' %}">Log in</a> to leave a review.</p>
+            {% endif %}
+            <p>Average Rating: {{ product.average_rating|floatformat:1 }}/5</p>
+
+
         </div>
     </main>
     <footer>

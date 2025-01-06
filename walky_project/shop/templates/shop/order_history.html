@@ -1,0 +1,21 @@
+<h1>Your Orders</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.created_at }}</td>
+            <td>${{ order.total_price }}</td>
+            <td>{{ 'Paid' if order.is_paid else 'Pending' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
