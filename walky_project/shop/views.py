@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
-from .models import Product, Cart, Order, OrderItem, Review, Wishlist, Profile
+from .models import Product, Cart, Order, OrderItem, Review, Wishlist
 from django.core.mail import send_mail
 from .forms import ReviewForm, UserForm, ProfileForm
 from django.db.models import Q
@@ -196,4 +196,4 @@ def edit_profile(request):
         'user_form': user_form,
         'profile_form': profile_form,
     }
-    return render(request, 'edit_profile.html', context)
+    return render(request, 'shop/edit_profile.html', context)
