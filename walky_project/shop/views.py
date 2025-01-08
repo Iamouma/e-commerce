@@ -3,7 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib import messages
 from django.db import transaction
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from .models import Product, Cart, Order, OrderItem, Review, Wishlist
 from django.core.mail import send_mail
 from .forms import ReviewForm, UserForm, ProfileForm
@@ -197,3 +197,11 @@ def edit_profile(request):
         'profile_form': profile_form,
     }
     return render(request, 'shop/edit_profile.html', context)
+
+@login_required  # Ensures the user is logged in
+@permission_required('shop.change_model', raise_exception=True)  # Checks permissions
+def admin_view(request):
+    return render(request, 'admin_view.html')  # Render a template for admin users
+
+def no_access(request):
+    return render(request, 'no_access.html')
